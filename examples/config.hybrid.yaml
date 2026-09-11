@@ -1,0 +1,32 @@
+# Recommended "best quality, still basically free" setup: spend a subscription/API
+# key on the planner and verifier tiers (a small share of total tokens — roughly the
+# 5%/15% end of the split), and let a free local Ollama model do the bulk of the
+# building. Real-world cost stays close to $0 even though the plan and the final
+# review come from a much stronger model.
+#
+# Requires: pip install relay-oss[anthropic]
+# And: export ANTHROPIC_API_KEY=sk-ant-...
+
+engines:
+  planner:
+    provider: anthropic
+    model: claude-sonnet-4-5
+  builder:
+    provider: ollama
+    model: qwen2.5-coder:7b
+    base_url: http://localhost:11434
+  verifier:
+    provider: anthropic
+    model: claude-sonnet-4-5
+
+safety:
+  require_shell_confirmation: true
+  allowed_shell_commands: [git, npm, pip, pip3, pytest, python, python3, yarn, pnpm, node]
+  max_file_bytes: 200000
+
+verification:
+  max_fix_retries: 2
+
+desktop_control:
+  enabled: false
+  kill_switch_hotkey: "ctrl+shift+x"

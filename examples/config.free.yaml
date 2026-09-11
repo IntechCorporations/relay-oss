@@ -1,0 +1,34 @@
+# Fully free, fully local setup: every tier runs on Ollama models on your own
+# machine. Zero API cost, and your code never leaves your computer.
+#
+# First: install Ollama (https://ollama.com), then:
+#   ollama pull llama3.1:8b
+#   ollama pull qwen2.5-coder:7b
+#
+# Copy this file to ~/.relay/config.yaml (or pass --config /path/to/this/file).
+
+engines:
+  planner:
+    provider: ollama
+    model: llama3.1:8b
+    base_url: http://localhost:11434
+  builder:
+    provider: ollama
+    model: qwen2.5-coder:7b
+    base_url: http://localhost:11434
+  verifier:
+    provider: ollama
+    model: llama3.1:8b
+    base_url: http://localhost:11434
+
+safety:
+  require_shell_confirmation: true
+  allowed_shell_commands: [git, npm, pip, pip3, pytest, python, python3, yarn, pnpm, node]
+  max_file_bytes: 200000
+
+verification:
+  max_fix_retries: 2
+
+desktop_control:
+  enabled: false
+  kill_switch_hotkey: "ctrl+shift+x"
