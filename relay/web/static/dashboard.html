@@ -6,14 +6,22 @@
 <title>Relay</title>
 <style>
   :root {
-    --bg: #05050a;
-    --panel: #0e0e17;
-    --border: #1f2030;
-    --text: #e7e7ef;
+    --bg: #08080d;
+    --sidebar: #0c0c14;
+    --panel: #101018;
+    --panel-2: #14141f;
+    --border: #22222f;
+    --text: #eceef5;
     --muted: #8b8b9e;
+    --muted-2: #5f5f72;
     --accent: #7c8cff;
+    --accent-dim: rgba(124,140,255,0.12);
     --good: #4ade80;
     --bad: #f87171;
+    --warn: #fbbf24;
+    --cheap: #4ade80;
+    --mid: #fbbf24;
+    --strong: #7c8cff;
   }
   * { box-sizing: border-box; }
   body {
@@ -21,46 +29,78 @@
     background: var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
   }
-  header {
+  /* ---------------- Sidebar ---------------- */
+  #sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 18px 12px;
+  }
+  .brand { font-weight: 800; font-size: 19px; letter-spacing: 0.01em; padding: 4px 10px 20px; }
+  .brand span { color: var(--accent); }
+  .nav-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 18px 28px;
-    border-bottom: 1px solid var(--border);
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-bottom: 2px;
+    user-select: none;
   }
-  header .brand { font-weight: 700; font-size: 18px; letter-spacing: 0.02em; }
-  header .brand span { color: var(--accent); }
-  header nav { display: flex; gap: 22px; color: var(--muted); font-size: 14px; }
-  main {
-    max-width: 980px;
-    margin: 0 auto;
-    padding: 28px 20px 60px;
-  }
-  .subtitle { color: var(--muted); margin-top: -6px; margin-bottom: 28px; font-size: 14px; }
+  .nav-item:hover { background: var(--panel-2); color: var(--text); }
+  .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+  .nav-item .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: 0.7; flex-shrink: 0; }
+  .sidebar-footer { margin-top: auto; padding: 10px 12px; font-size: 12px; color: var(--muted-2); }
+  .sidebar-footer .status-line { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+  .status-led { width: 7px; height: 7px; border-radius: 50%; background: var(--good); box-shadow: 0 0 6px var(--good); }
+  .status-led.off { background: var(--muted-2); box-shadow: none; }
+
+  /* ---------------- Main area ---------------- */
+  #main { flex: 1; overflow-y: auto; }
+  .view { display: none; padding: 30px 36px 60px; max-width: 1100px; margin: 0 auto; }
+  .view.active { display: block; }
+  .view-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 22px; }
+  .view-header h1 { font-size: 21px; margin: 0; }
+  .view-header .subtitle { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
   .card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 18px;
   }
-  .card h2 { margin: 0 0 14px; font-size: 15px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .card h2 { margin: 0 0 14px; font-size: 13px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+  .card-sub { color: var(--muted); font-size: 12.5px; margin: -8px 0 14px; }
+
   label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
-  input[type=text], textarea {
+  input[type=text], input[type=password], input[type=number], textarea, select {
     width: 100%;
     background: #08080f;
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text);
-    padding: 10px 12px;
+    padding: 9px 11px;
     font-size: 14px;
     font-family: inherit;
   }
-  textarea { min-height: 70px; resize: vertical; }
+  select { appearance: none; cursor: pointer; }
+  textarea { min-height: 76px; resize: vertical; }
   .row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
-  .row > div { flex: 1; min-width: 200px; }
-  .controls { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+  .row > div { flex: 1; min-width: 180px; }
+  .controls { display: flex; align-items: center; gap: 14px; margin-top: 6px; flex-wrap: wrap; }
+
   button {
     background: var(--accent);
     color: #05050a;
@@ -68,24 +108,39 @@
     border-radius: 8px;
     padding: 10px 18px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13.5px;
     cursor: pointer;
   }
+  button.secondary { background: var(--panel-2); color: var(--text); border: 1px solid var(--border); }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 7px 12px; font-size: 12.5px; }
+  button.danger { background: rgba(248,113,113,0.12); color: var(--bad); border: 1px solid rgba(248,113,113,0.3); }
   button:disabled { opacity: 0.5; cursor: not-allowed; }
-  .checkbox-row { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  button.small { padding: 6px 11px; font-size: 12.5px; }
+
+  .checkbox-row { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; cursor: pointer; }
+
+  /* Toggle switch */
+  .switch { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: var(--border); border-radius: 999px; cursor: pointer; transition: 0.15s; }
+  .slider::before { content: ""; position: absolute; width: 15px; height: 15px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: 0.15s; }
+  .switch input:checked + .slider { background: var(--accent); }
+  .switch input:checked + .slider::before { transform: translateX(17px); }
+
   #log {
     background: #08080f;
     border: 1px solid var(--border);
     border-radius: 8px;
     padding: 14px;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 13px;
-    height: 260px;
+    font-size: 12.5px;
+    height: 280px;
     overflow-y: auto;
     white-space: pre-wrap;
   }
   #log .line { margin-bottom: 4px; }
   #log .err { color: var(--bad); }
+  #log .router { color: var(--accent); }
   .status-pill {
     display: inline-block;
     padding: 3px 10px;
@@ -95,87 +150,332 @@
   }
   .status-pill.pass { background: rgba(74,222,128,0.15); color: var(--good); }
   .status-pill.fail { background: rgba(248,113,113,0.15); color: var(--bad); }
+  .rung-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+  .rung-pill.cheap { background: rgba(74,222,128,0.15); color: var(--cheap); }
+  .rung-pill.mid { background: rgba(251,191,36,0.15); color: var(--mid); }
+  .rung-pill.strong { background: rgba(124,140,255,0.15); color: var(--strong); }
+  .rung-pill.builder { background: var(--panel-2); color: var(--muted); }
+
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 500; }
-  .hidden { display: none; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; font-size: 12px; }
+  .hidden { display: none !important; }
+  .muted { color: var(--muted); }
+  .small-text { font-size: 12px; color: var(--muted-2); }
+
+  .conn-list { display: flex; flex-direction: column; gap: 10px; }
+  .conn-item {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .conn-item .conn-info { display: flex; flex-direction: column; gap: 2px; }
+  .conn-item .conn-name { font-weight: 600; font-size: 14px; }
+  .conn-item .conn-meta { font-size: 12px; color: var(--muted); }
+  .conn-actions { display: flex; gap: 8px; align-items: center; }
+  .test-result { font-size: 12px; margin-top: 6px; }
+  .test-result.ok { color: var(--good); }
+  .test-result.bad { color: var(--bad); }
+
+  .rung-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .rung-box { background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .rung-box .rung-title { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .rung-box .rung-desc { font-size: 12px; color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+
+  .threshold-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+  .threshold-row input[type=range] { flex: 1; accent-color: var(--accent); }
+  .threshold-val { width: 42px; text-align: right; font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 600; font-size: 13px; }
+
+  .history-item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px; border-bottom: 1px solid var(--border);
+  }
+  .history-item:last-child { border-bottom: none; }
+  .history-task { font-size: 13.5px; margin-bottom: 3px; }
+  .history-meta { font-size: 12px; color: var(--muted); display: flex; gap: 10px; align-items: center; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 13.5px; }
+
+  .badge-live { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--accent); background: var(--accent-dim); padding: 2px 9px; border-radius: 999px; font-weight: 600; }
+  .badge-live .pulse { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
 </style>
 </head>
 <body>
-<header>
+
+<div id="sidebar">
   <div class="brand">Relay<span>.</span></div>
-  <nav><span>Dashboard</span><span>Config</span><span>History</span></nav>
-</header>
-<main>
-  <div class="subtitle">A free, local, multi-tier AI coding orchestrator. Runs on your machine.</div>
+  <div class="nav-item active" data-view="run"><span class="dot"></span> Run</div>
+  <div class="nav-item" data-view="settings"><span class="dot"></span> Settings</div>
+  <div class="nav-item" data-view="history"><span class="dot"></span> History</div>
+  <div class="sidebar-footer">
+    Free, local, multi-tier orchestrator.
+    <div class="status-line"><span class="status-led" id="wsLed"></span> <span id="wsStatus">connecting…</span></div>
+  </div>
+</div>
 
-  <div class="card">
-    <h2>New run</h2>
-    <div class="row">
+<div id="main">
+
+  <!-- ===================== RUN VIEW ===================== -->
+  <div class="view active" id="view-run">
+    <div class="view-header">
       <div>
-        <label for="task">Task</label>
-        <textarea id="task" placeholder="e.g. Add a dark mode toggle to the settings page"></textarea>
+        <h1>Run a task</h1>
+        <div class="subtitle">Plan → build → verify, on whatever models you've connected.</div>
+      </div>
+      <span class="badge-live hidden" id="liveBadge"><span class="pulse"></span> running</span>
+    </div>
+
+    <div class="card">
+      <h2>New run</h2>
+      <div class="row">
+        <div>
+          <label for="task">Task</label>
+          <textarea id="task" placeholder="e.g. Add a dark mode toggle to the settings page"></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="project">Project directory</label>
+          <input type="text" id="project" value="." />
+        </div>
+      </div>
+      <div class="controls">
+        <button id="runBtn">Run</button>
+        <label class="checkbox-row"><input type="checkbox" id="demo" checked /> Demo mode (no models required)</label>
+        <span class="small-text" id="routerHint"></span>
       </div>
     </div>
-    <div class="row">
+
+    <div class="card">
+      <h2>Live log</h2>
+      <div id="log"></div>
+    </div>
+
+    <div class="card hidden" id="resultCard">
+      <h2>Result</h2>
+      <p id="planSummary" class="muted"></p>
+      <p>Verification: <span id="verifyStatus" class="status-pill"></span> <span id="durationText" class="small-text"></span></p>
+      <table>
+        <thead><tr><th>Tier</th><th>Model</th><th>Calls</th><th>Input</th><th>Output</th></tr></thead>
+        <tbody id="tokenTable"></tbody>
+      </table>
+      <p id="totalTokens" class="muted" style="margin-top:10px;"></p>
+    </div>
+  </div>
+
+  <!-- ===================== SETTINGS VIEW ===================== -->
+  <div class="view" id="view-settings">
+    <div class="view-header">
       <div>
-        <label for="project">Project directory</label>
-        <input type="text" id="project" value="." />
+        <h1>Settings</h1>
+        <div class="subtitle">Connect model providers, then decide how tasks are routed across them.</div>
       </div>
     </div>
+
+    <div class="card">
+      <h2>Connect a provider</h2>
+      <div class="card-sub">Add as many as you like — local, hosted, or both. Keys are stored only in your local <code>~/.relay/config.yaml</code>, never sent anywhere but the provider you pick.</div>
+      <div class="row">
+        <div>
+          <label for="newProvider">Provider</label>
+          <select id="newProvider">
+            <option value="ollama">Ollama (local, free)</option>
+            <option value="openai_compatible:lmstudio">LM Studio (local, free)</option>
+            <option value="openai_compatible:vllm">vLLM (local, free)</option>
+            <option value="anthropic">Anthropic (Claude)</option>
+            <option value="openai">OpenAI</option>
+            <option value="gemini">Google Gemini</option>
+            <option value="openai_compatible:groq">Groq</option>
+            <option value="openai_compatible:together">Together AI</option>
+            <option value="openai_compatible:fireworks">Fireworks AI</option>
+            <option value="openai_compatible:custom">Custom OpenAI-compatible endpoint</option>
+          </select>
+        </div>
+        <div>
+          <label for="newModel">Model name</label>
+          <input type="text" id="newModel" placeholder="e.g. llama3.1:8b, claude-sonnet-4-5, gpt-4.1-mini" />
+        </div>
+      </div>
+      <div class="row">
+        <div id="newBaseUrlWrap">
+          <label for="newBaseUrl">Base URL</label>
+          <input type="text" id="newBaseUrl" placeholder="http://localhost:11434" />
+        </div>
+        <div id="newApiKeyWrap" class="hidden">
+          <label for="newApiKey">API key</label>
+          <input type="password" id="newApiKey" placeholder="sk-…" />
+        </div>
+        <div>
+          <label for="newLabel">Label (optional)</label>
+          <input type="text" id="newLabel" placeholder="e.g. My local coder" />
+        </div>
+      </div>
+      <div class="controls">
+        <button id="addConnBtn">Add connection</button>
+        <button class="secondary" id="testNewBtn">Test</button>
+        <span class="test-result" id="newTestResult"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Your connections</h2>
+      <div class="conn-list" id="connList"></div>
+      <div class="empty-state hidden" id="connEmpty">No connections yet — add one above. Ollama at the default localhost URL works with zero setup if you have it installed.</div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+        <h2 style="margin-bottom:0;">Auto-routing</h2>
+        <label class="switch"><input type="checkbox" id="routerEnabled"><span class="slider"></span></label>
+      </div>
+      <div class="card-sub">Switch models automatically per build step to cut token spend — mechanical steps go to a free/cheap model, only genuinely hard steps escalate to a stronger paid one. When off, the Manual assignment below is used instead.</div>
+
+      <div id="routerConfig">
+        <div class="rung-grid">
+          <div class="rung-box">
+            <div class="rung-title"><span class="rung-pill cheap">Cheap</span></div>
+            <div class="rung-desc">Handles most steps: renames, boilerplate, small edits. Almost always a free local model.</div>
+            <select id="rungCheap"></select>
+          </div>
+          <div class="rung-box">
+            <div class="rung-title"><span class="rung-pill mid">Mid</span></div>
+            <div class="rung-desc">Moderately complex steps — multi-file changes, non-trivial logic. Optional.</div>
+            <select id="rungMid"><option value="">— none —</option></select>
+          </div>
+          <div class="rung-box">
+            <div class="rung-title"><span class="rung-pill strong">Strong</span></div>
+            <div class="rung-desc">Hard steps: refactors, security, concurrency — and any step a cheaper rung got wrong. Optional but recommended.</div>
+            <select id="rungStrong"><option value="">— none —</option></select>
+          </div>
+        </div>
+
+        <h2 style="margin-top:20px;">Routing sensitivity</h2>
+        <div class="threshold-row">
+          <label style="width:170px; margin:0;">Escalate to Mid above</label>
+          <input type="range" id="thresholdMid" min="0" max="100" value="35">
+          <span class="threshold-val" id="thresholdMidVal">35%</span>
+        </div>
+        <div class="threshold-row">
+          <label style="width:170px; margin:0;">Escalate to Strong above</label>
+          <input type="range" id="thresholdStrong" min="0" max="100" value="70">
+          <span class="threshold-val" id="thresholdStrongVal">70%</span>
+        </div>
+        <label class="checkbox-row" style="margin-top:4px;"><input type="checkbox" id="escalateOnFail" checked> Automatically escalate a step to a stronger model if verification rejects it</label>
+        <div class="row" style="margin-top:14px;">
+          <div style="max-width:260px;">
+            <label for="maxTokensPerRun">Token budget per run (optional)</label>
+            <input type="number" id="maxTokensPerRun" placeholder="e.g. 200000 — blank = no cap" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="manualCard">
+      <h2>Manual assignment</h2>
+      <div class="card-sub">Which connection powers each tier, when auto-routing is off.</div>
+      <div class="row">
+        <div>
+          <label>Planner</label>
+          <select id="tierPlanner"></select>
+        </div>
+        <div>
+          <label>Builder</label>
+          <select id="tierBuilder"></select>
+        </div>
+        <div>
+          <label>Verifier</label>
+          <select id="tierVerifier"></select>
+        </div>
+      </div>
+    </div>
+
     <div class="controls">
-      <button id="runBtn">Run</button>
-      <label class="checkbox-row"><input type="checkbox" id="demo" checked /> Demo mode (no models required)</label>
+      <button id="saveSettingsBtn">Save settings</button>
+      <span class="test-result" id="saveResult"></span>
     </div>
   </div>
 
-  <div class="card">
-    <h2>Live log</h2>
-    <div id="log"></div>
+  <!-- ===================== HISTORY VIEW ===================== -->
+  <div class="view" id="view-history">
+    <div class="view-header">
+      <div>
+        <h1>History</h1>
+        <div class="subtitle">Runs from this dashboard session.</div>
+      </div>
+      <button class="ghost small" id="refreshHistoryBtn">Refresh</button>
+    </div>
+    <div class="card" style="padding:0;">
+      <div id="historyList"></div>
+      <div class="empty-state hidden" id="historyEmpty">No runs yet. Kick one off from the Run tab.</div>
+    </div>
   </div>
 
-  <div class="card hidden" id="resultCard">
-    <h2>Result</h2>
-    <p id="planSummary" style="color:var(--muted)"></p>
-    <p>Verification: <span id="verifyStatus" class="status-pill"></span></p>
-    <table>
-      <thead><tr><th>Tier</th><th>Model</th><th>Input tokens</th><th>Output tokens</th></tr></thead>
-      <tbody id="tokenTable"></tbody>
-    </table>
-    <p id="totalTokens" style="color:var(--muted); margin-top:10px;"></p>
-  </div>
-</main>
+</div>
 
 <script>
+  // ---------------------------------------------------------------------
+  // Navigation
+  // ---------------------------------------------------------------------
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('view-' + item.dataset.view).classList.add('active');
+      if (item.dataset.view === 'history') loadHistory();
+    });
+  });
+
+  // ---------------------------------------------------------------------
+  // WebSocket + live log
+  // ---------------------------------------------------------------------
   const logEl = document.getElementById('log');
   const runBtn = document.getElementById('runBtn');
   const resultCard = document.getElementById('resultCard');
+  const liveBadge = document.getElementById('liveBadge');
 
-  function appendLog(text, isErr) {
+  function appendLog(text, cls) {
     const div = document.createElement('div');
-    div.className = 'line' + (isErr ? ' err' : '');
+    div.className = 'line' + (cls ? ' ' + cls : '');
     div.textContent = text;
     logEl.appendChild(div);
     logEl.scrollTop = logEl.scrollHeight;
   }
 
-  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+  let ws;
+  function connectWs() {
+    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+    ws = new WebSocket(`${proto}://${location.host}/ws`);
+    ws.onopen = () => { document.getElementById('wsLed').classList.remove('off'); document.getElementById('wsStatus').textContent = 'connected'; };
+    ws.onclose = () => { document.getElementById('wsLed').classList.add('off'); document.getElementById('wsStatus').textContent = 'disconnected'; setTimeout(connectWs, 2000); };
+    ws.onmessage = (evt) => {
+      const msg = JSON.parse(evt.data);
+      if (msg.type === 'start') {
+        appendLog(`Starting: ${msg.task}` + (msg.routed ? ' (auto-routing on)' : ''));
+        liveBadge.classList.remove('hidden');
+      } else if (msg.type === 'log') {
+        const isRouter = msg.message.startsWith('[router]');
+        appendLog(msg.message, isRouter ? 'router' : null);
+      } else if (msg.type === 'error') {
+        appendLog('Error: ' + msg.message, 'err');
+        runBtn.disabled = false;
+        liveBadge.classList.add('hidden');
+      } else if (msg.type === 'done') {
+        renderReport(msg.report);
+        runBtn.disabled = false;
+        liveBadge.classList.add('hidden');
+      }
+    };
+  }
+  connectWs();
 
-  ws.onmessage = (evt) => {
-    const msg = JSON.parse(evt.data);
-    if (msg.type === 'start') {
-      appendLog(`Starting: ${msg.task}`);
-    } else if (msg.type === 'log') {
-      appendLog(msg.message);
-    } else if (msg.type === 'error') {
-      appendLog('Error: ' + msg.message, true);
-      runBtn.disabled = false;
-    } else if (msg.type === 'done') {
-      renderReport(msg.report);
-      runBtn.disabled = false;
+  function rungPillFor(tier) {
+    if (tier.includes(':')) {
+      const rung = tier.split(':')[1];
+      return `<span class="rung-pill ${rung}">${rung}</span>`;
     }
-  };
+    return `<span class="rung-pill builder">${tier}</span>`;
+  }
 
   function renderReport(report) {
     resultCard.classList.remove('hidden');
@@ -184,12 +484,16 @@
     const statusEl = document.getElementById('verifyStatus');
     statusEl.textContent = v.passed ? 'PASSED' : 'FAILED';
     statusEl.className = 'status-pill ' + (v.passed ? 'pass' : 'fail');
+    document.getElementById('durationText').textContent = report.duration_s ? `· ${report.duration_s}s` : '';
 
     const body = document.getElementById('tokenTable');
     body.innerHTML = '';
-    for (const [tier, stats] of Object.entries(report.token_totals || {})) {
+    const rows = report.token_by_model && report.token_by_model.length
+      ? report.token_by_model
+      : Object.entries(report.token_totals || {}).map(([tier, s]) => ({ tier, model: s.model, calls: '-', input: s.input, output: s.output }));
+    for (const row of rows) {
       const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${tier}</td><td>${stats.model}</td><td>${stats.input}</td><td>${stats.output}</td>`;
+      tr.innerHTML = `<td>${rungPillFor(row.tier)}</td><td>${row.model}</td><td>${row.calls}</td><td>${row.input}</td><td>${row.output}</td>`;
       body.appendChild(tr);
     }
     document.getElementById('totalTokens').textContent = `Total tokens: ${report.grand_total_tokens}`;
@@ -211,6 +515,285 @@
       }),
     });
   });
+
+  // ---------------------------------------------------------------------
+  // Settings: connections + routing
+  // ---------------------------------------------------------------------
+  let liveConfig = { engines: {}, router: {}, connections: [], known_platforms: {} };
+  let connIdSeq = 0;
+
+  function newConnId() { return 'conn_' + Date.now() + '_' + (connIdSeq++); }
+
+  function providerLabel(conn) {
+    const names = { ollama: 'Ollama', anthropic: 'Anthropic', openai: 'OpenAI', gemini: 'Gemini', openai_compatible: conn.platform_label || 'OpenAI-compatible', mock: 'Mock' };
+    return names[conn.provider] || conn.provider;
+  }
+
+  async function loadConfig() {
+    const res = await fetch('/api/config');
+    liveConfig = await res.json();
+    if (!Array.isArray(liveConfig.connections)) liveConfig.connections = [];
+    renderConnections();
+    renderRouterUI();
+    renderManualAssignment();
+  }
+
+  function renderConnections() {
+    const list = document.getElementById('connList');
+    const empty = document.getElementById('connEmpty');
+    list.innerHTML = '';
+    if (!liveConfig.connections.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    for (const conn of liveConfig.connections) {
+      const item = document.createElement('div');
+      item.className = 'conn-item';
+      const meta = [providerLabel(conn), conn.model, conn.base_url ? conn.base_url : null].filter(Boolean).join(' · ');
+      item.innerHTML = `
+        <div class="conn-info">
+          <div class="conn-name">${conn.label || conn.model}</div>
+          <div class="conn-meta">${meta}</div>
+        </div>
+        <div class="conn-actions">
+          <button class="ghost small" data-test="${conn.id}">Test</button>
+          <button class="danger small" data-remove="${conn.id}">Remove</button>
+        </div>`;
+      list.appendChild(item);
+    }
+    list.querySelectorAll('[data-test]').forEach(btn => btn.addEventListener('click', () => testConnection(btn.dataset.test, btn)));
+    list.querySelectorAll('[data-remove]').forEach(btn => btn.addEventListener('click', () => removeConnection(btn.dataset.remove)));
+  }
+
+  function connectionOptionsHtml(selectedId) {
+    return liveConfig.connections.map(c =>
+      `<option value="${c.id}" ${c.id === selectedId ? 'selected' : ''}>${c.label || c.model} (${providerLabel(c)})</option>`
+    ).join('');
+  }
+
+  function renderRouterUI() {
+    const r = liveConfig.router || {};
+    document.getElementById('routerEnabled').checked = !!r.enabled;
+    document.getElementById('escalateOnFail').checked = r.escalate_on_verify_fail !== false;
+    document.getElementById('maxTokensPerRun').value = r.max_tokens_per_run || '';
+    const th = r.thresholds || { mid: 0.35, strong: 0.7 };
+    document.getElementById('thresholdMid').value = Math.round((th.mid ?? 0.35) * 100);
+    document.getElementById('thresholdStrong').value = Math.round((th.strong ?? 0.7) * 100);
+    updateThresholdLabels();
+
+    const rungs = r.rungs || {};
+    for (const [rung, selId] of [['cheap','rungCheap'], ['mid','rungMid'], ['strong','rungStrong']]) {
+      const sel = document.getElementById(selId);
+      const placeholder = rung === 'cheap' ? '' : '<option value="">— none —</option>';
+      sel.innerHTML = placeholder + connectionOptionsHtml(rungs[rung] && rungs[rung]._connId);
+    }
+  }
+
+  function renderManualAssignment() {
+    const e = liveConfig.engines || {};
+    for (const [tier, selId] of [['planner','tierPlanner'], ['builder','tierBuilder'], ['verifier','tierVerifier']]) {
+      const sel = document.getElementById(selId);
+      sel.innerHTML = connectionOptionsHtml(e[tier] && e[tier]._connId);
+    }
+  }
+
+  function updateThresholdLabels() {
+    document.getElementById('thresholdMidVal').textContent = document.getElementById('thresholdMid').value + '%';
+    document.getElementById('thresholdStrongVal').textContent = document.getElementById('thresholdStrong').value + '%';
+  }
+  document.getElementById('thresholdMid').addEventListener('input', updateThresholdLabels);
+  document.getElementById('thresholdStrong').addEventListener('input', updateThresholdLabels);
+
+  // --- add / test / remove connections ---
+  const newProviderSel = document.getElementById('newProvider');
+  newProviderSel.addEventListener('change', () => {
+    const val = newProviderSel.value;
+    const [provider, platform] = val.split(':');
+    const baseUrlWrap = document.getElementById('newBaseUrlWrap');
+    const apiKeyWrap = document.getElementById('newApiKeyWrap');
+    const baseUrlInput = document.getElementById('newBaseUrl');
+    baseUrlWrap.classList.remove('hidden');
+    apiKeyWrap.classList.add('hidden');
+    baseUrlInput.value = '';
+    baseUrlInput.placeholder = 'http://localhost:11434';
+
+    if (provider === 'ollama') {
+      baseUrlInput.placeholder = 'http://localhost:11434';
+    } else if (provider === 'anthropic' || provider === 'openai' || provider === 'gemini') {
+      baseUrlWrap.classList.add('hidden');
+      apiKeyWrap.classList.remove('hidden');
+    } else if (provider === 'openai_compatible') {
+      apiKeyWrap.classList.remove('hidden');
+      const presets = (liveConfig.known_platforms || {});
+      if (platform !== 'custom' && presets[platform]) {
+        baseUrlInput.value = presets[platform].base_url;
+        if (!presets[platform].needs_key) apiKeyWrap.classList.add('hidden');
+      }
+    }
+  });
+  newProviderSel.dispatchEvent(new Event('change'));
+
+  function buildConnFromForm() {
+    const val = newProviderSel.value;
+    const [provider, platform] = val.split(':');
+    const model = document.getElementById('newModel').value.trim();
+    const baseUrl = document.getElementById('newBaseUrl').value.trim();
+    const apiKey = document.getElementById('newApiKey').value.trim();
+    const label = document.getElementById('newLabel').value.trim();
+    if (!model) { alert('Enter a model name first.'); return null; }
+    const conn = { id: newConnId(), provider, model, label };
+    if (provider === 'openai_compatible') {
+      conn.platform_label = ({groq:'Groq', together:'Together AI', fireworks:'Fireworks AI', lmstudio:'LM Studio', vllm:'vLLM', custom:'Custom'})[platform] || 'OpenAI-compatible';
+    }
+    if (baseUrl) conn.base_url = baseUrl;
+    if (apiKey) conn.api_key = apiKey;
+    return conn;
+  }
+
+  document.getElementById('testNewBtn').addEventListener('click', async () => {
+    const conn = buildConnFromForm();
+    if (!conn) return;
+    const resultEl = document.getElementById('newTestResult');
+    resultEl.textContent = 'Testing…';
+    resultEl.className = 'test-result';
+    const res = await fetch('/api/test-connection', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ provider: conn.provider, model: conn.model, base_url: conn.base_url, api_key: conn.api_key }),
+    });
+    const data = await res.json();
+    if (data.ok) { resultEl.textContent = `✓ Connected (${data.model})`; resultEl.className = 'test-result ok'; }
+    else { resultEl.textContent = `✗ ${data.error}`; resultEl.className = 'test-result bad'; }
+  });
+
+  document.getElementById('addConnBtn').addEventListener('click', () => {
+    const conn = buildConnFromForm();
+    if (!conn) return;
+    liveConfig.connections.push(conn);
+    renderConnections();
+    renderRouterUI();
+    renderManualAssignment();
+    document.getElementById('newModel').value = '';
+    document.getElementById('newLabel').value = '';
+    document.getElementById('newApiKey').value = '';
+    document.getElementById('newTestResult').textContent = '';
+  });
+
+  async function testConnection(connId, btn) {
+    const conn = liveConfig.connections.find(c => c.id === connId);
+    if (!conn) return;
+    btn.textContent = '…';
+    const res = await fetch('/api/test-connection', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ provider: conn.provider, model: conn.model, base_url: conn.base_url, api_key: conn.api_key }),
+    });
+    const data = await res.json();
+    btn.textContent = data.ok ? '✓ OK' : '✗ Failed';
+    setTimeout(() => { btn.textContent = 'Test'; }, 2500);
+    if (!data.ok) alert('Connection failed: ' + data.error);
+  }
+
+  function removeConnection(connId) {
+    liveConfig.connections = liveConfig.connections.filter(c => c.id !== connId);
+    renderConnections();
+    renderRouterUI();
+    renderManualAssignment();
+  }
+
+  document.getElementById('routerEnabled').addEventListener('change', (e) => {
+    document.getElementById('routerConfig').style.opacity = e.target.checked ? '1' : '0.45';
+    document.getElementById('manualCard').style.opacity = e.target.checked ? '0.45' : '1';
+  });
+
+  function connToEngineCfg(conn) {
+    if (!conn) return null;
+    const cfg = { provider: conn.provider, model: conn.model, _connId: conn.id };
+    if (conn.base_url) cfg.base_url = conn.base_url;
+    if (conn.api_key) cfg.api_key = conn.api_key;
+    return cfg;
+  }
+
+  document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+    const byId = id => liveConfig.connections.find(c => c.id === id);
+
+    const engines = {
+      planner: connToEngineCfg(byId(document.getElementById('tierPlanner').value)),
+      builder: connToEngineCfg(byId(document.getElementById('tierBuilder').value)),
+      verifier: connToEngineCfg(byId(document.getElementById('tierVerifier').value)),
+    };
+
+    const router = {
+      enabled: document.getElementById('routerEnabled').checked,
+      escalate_on_verify_fail: document.getElementById('escalateOnFail').checked,
+      max_tokens_per_run: document.getElementById('maxTokensPerRun').value ? parseInt(document.getElementById('maxTokensPerRun').value, 10) : null,
+      thresholds: {
+        mid: parseInt(document.getElementById('thresholdMid').value, 10) / 100,
+        strong: parseInt(document.getElementById('thresholdStrong').value, 10) / 100,
+      },
+      rungs: {
+        cheap: connToEngineCfg(byId(document.getElementById('rungCheap').value)),
+        mid: connToEngineCfg(byId(document.getElementById('rungMid').value)),
+        strong: connToEngineCfg(byId(document.getElementById('rungStrong').value)),
+      },
+    };
+
+    const resultEl = document.getElementById('saveResult');
+    resultEl.textContent = 'Saving…';
+    resultEl.className = 'test-result';
+    const res = await fetch('/api/config', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ engines, router, connections: liveConfig.connections }),
+    });
+    if (res.ok) {
+      resultEl.textContent = '✓ Saved';
+      resultEl.className = 'test-result ok';
+      updateRouterHint(router);
+    } else {
+      resultEl.textContent = '✗ Failed to save';
+      resultEl.className = 'test-result bad';
+    }
+    setTimeout(() => { resultEl.textContent = ''; }, 3000);
+  });
+
+  function updateRouterHint(router) {
+    const hint = document.getElementById('routerHint');
+    if (router && router.enabled) {
+      const rungs = Object.entries(router.rungs || {}).filter(([,v]) => v).map(([k]) => k);
+      hint.textContent = rungs.length ? `Auto-routing on (${rungs.join(', ')})` : '';
+    } else {
+      hint.textContent = '';
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // History
+  // ---------------------------------------------------------------------
+  async function loadHistory() {
+    const res = await fetch('/api/history');
+    const data = await res.json();
+    const list = document.getElementById('historyList');
+    const empty = document.getElementById('historyEmpty');
+    list.innerHTML = '';
+    if (!data.runs.length) { empty.classList.remove('hidden'); return; }
+    empty.classList.add('hidden');
+    for (const run of data.runs) {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      const when = new Date(run.timestamp * 1000).toLocaleString();
+      div.innerHTML = `
+        <div>
+          <div class="history-task">${run.task}</div>
+          <div class="history-meta">
+            <span class="status-pill ${run.passed ? 'pass' : 'fail'}">${run.passed ? 'PASSED' : 'FAILED'}</span>
+            <span>${run.total_tokens} tokens</span>
+            <span>${run.duration_s}s</span>
+            ${run.routed ? '<span>· auto-routed</span>' : ''}
+            <span>${when}</span>
+          </div>
+        </div>`;
+      list.appendChild(div);
+    }
+  }
+  document.getElementById('refreshHistoryBtn').addEventListener('click', loadHistory);
+
+  loadConfig().then(() => updateRouterHint(liveConfig.router));
 </script>
 </body>
 </html>
