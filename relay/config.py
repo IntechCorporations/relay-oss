@@ -12,6 +12,8 @@ import yaml
 DEFAULT_CONFIG_PATH = Path.home() / ".relay" / "config.yaml"
 
 DEFAULT_CONFIG = {
+    # Manual per-tier assignment. This is what's used when router.enabled is False —
+    # you're picking exactly which engine handles planning/building/verification.
     "engines": {
         "planner": {
             "provider": "ollama",
@@ -29,6 +31,30 @@ DEFAULT_CONFIG = {
             "base_url": "http://localhost:11434",
         },
     },
+    # Auto-router: when enabled, the BUILDER tier's steps are routed per-step to the
+    # cheapest rung ("cheap" / "mid" / "strong") that looks capable of that step,
+    # instead of always using engines.builder. Planner/verifier stay manually assigned
+    # above, since they're already a small slice of total tokens.
+    "router": {
+        "enabled": False,
+        "escalate_on_verify_fail": True,
+        "max_tokens_per_run": None,
+        "thresholds": {"mid": 0.35, "strong": 0.7},
+        "rungs": {
+            "cheap": {
+                "provider": "ollama",
+                "model": "qwen2.5-coder:7b",
+                "base_url": "http://localhost:11434",
+            },
+            "mid": None,
+            "strong": None,
+        },
+    },
+    # Saved provider connections, managed from the dashboard's Settings screen. Each
+    # entry is reusable across engines/rungs so you configure an API key once. This
+    # list is metadata for the UI; engines/router entries above are what's actually
+    # used at run time (the UI keeps them in sync when you assign a connection).
+    "connections": [],
     "safety": {
         "require_shell_confirmation": True,
         "allowed_shell_commands": [

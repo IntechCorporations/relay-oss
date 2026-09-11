@@ -87,6 +87,18 @@ class TokenLedger:
             t["output"] += o
         return by_tier
 
+    def by_model(self) -> list:
+        """Per (tier, model) breakdown — the useful view once a single tier (usually
+        the builder) can be served by several different models via auto-routing."""
+        rows = {}
+        for tier, i, o, model in self.entries:
+            key = (tier, model)
+            r = rows.setdefault(key, {"tier": tier, "model": model, "input": 0, "output": 0, "calls": 0})
+            r["input"] += i
+            r["output"] += o
+            r["calls"] += 1
+        return list(rows.values())
+
     def grand_total(self) -> int:
         return sum(i + o for _, i, o, _ in self.entries)
 
@@ -102,6 +114,8 @@ class Orchestrator:
         project_dir: str,
         logger=print,
         confirm_shell=None,
+        router=None,
+        rung_engines: dict = None,
     ):
         self.planner = planner
         self.builder = builder
@@ -112,6 +126,12 @@ class Orchestrator:
         self.log = logger
         self.confirm_shell = confirm_shell
         self.ledger = TokenLedger()
+        # Optional cost-aware auto-router (relay.router.Router) plus the pre-built
+        # engines for each of its rungs ("cheap"/"mid"/"strong"). When both are
+        # supplied, build_step() routes each step to a rung instead of always using
+        # `builder`. Either can be left None to keep the old fixed-builder behavior.
+        self.router = router
+        self.rung_engines = rung_engines or {}
 
     def _gather_context(self) -> str:
         return "\n".join(filesystem.list_tree(self.project_dir))
@@ -132,8 +152,18 @@ class Orchestrator:
             f"Task:\n{task}\n\nStep {step.get('id')}: {step.get('description')}\n\n"
             f"Current contents of target files (JSON):\n{json.dumps(current)}\n"
         )
-        result = self.builder.complete(system=BUILDER_SYSTEM, prompt=prompt)
-        self.ledger.record("builder", result)
+
+        engine = self.builder
+        tier_label = "builder"
+        if self.router is not None:
+            file_sizes = {rel: len(content) for rel, content in current.items()}
+            decision = self.router.choose(step, file_sizes)
+            engine = self.rung_engines.get(decision.engine_key) or self.builder
+            tier_label = f"builder:{decision.tier}"
+            self.log(f"[router] {decision.reason}")
+
+        result = engine.complete(system=BUILDER_SYSTEM, prompt=prompt)
+        self.ledger.record(tier_label, result)
         parsed = _extract_json(result.text)
 
         diffs = {}
@@ -196,6 +226,12 @@ class Orchestrator:
         retries = self.verification_cfg.get("max_fix_retries", 2)
         while not verify_result.get("passed", True) and retries > 0:
             self.log(f"[verifier] issues found, sending back to builder ({retries} left)")
+            if self.router is not None:
+                # Escalate every step that touched a file the verifier flagged, so the
+                # retry uses a stronger engine instead of repeating a rung that just
+                # produced output the verifier rejected.
+                for r in build_results:
+                    self.router.mark_failed(r["step"].get("id"))
             fix_step = {
                 "id": "fix",
                 "description": "Fix the following issues found during verification: "
@@ -206,11 +242,16 @@ class Orchestrator:
             verify_result = self.verify(task, _full_diff())
             retries -= 1
 
+        if self.router is not None:
+            self.router.budget.record(self.ledger.grand_total())
+
         return {
             "task": task,
             "plan": plan,
             "build_results": build_results,
             "verify_result": verify_result,
             "token_totals": self.ledger.totals(),
+            "token_by_model": self.ledger.by_model(),
             "grand_total_tokens": self.ledger.grand_total(),
+            "routed": self.router is not None,
         }

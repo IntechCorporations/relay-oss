@@ -8,6 +8,7 @@ from rich.table import Table
 from . import config as config_mod
 from .engines.factory import build_engine, EngineConfigError
 from .orchestrator import Orchestrator
+from .router import Router, TokenBudget
 
 console = Console()
 
@@ -51,6 +52,25 @@ def run(task, project, config_path, yes, demo):
         console.print(f"[red]Engine setup failed:[/red] {e}")
         sys.exit(1)
 
+    router = None
+    rung_engines = {}
+    router_cfg = cfg.get("router", {})
+    if router_cfg.get("enabled") and not demo:
+        rungs = router_cfg.get("rungs", {})
+        for rung_name, rung_cfg in rungs.items():
+            if not rung_cfg:
+                continue
+            try:
+                rung_engines[rung_name] = build_engine(rung_cfg)
+            except (EngineConfigError, RuntimeError) as e:
+                console.print(f"[yellow]Skipping router rung '{rung_name}':[/yellow] {e}")
+        if rung_engines:
+            budget = TokenBudget(router_cfg.get("max_tokens_per_run"))
+            router = Router(router_cfg, budget=budget)
+            console.print(f"[cyan]Auto-routing enabled[/cyan] across rungs: {', '.join(rung_engines)}")
+        else:
+            console.print("[yellow]Auto-routing was enabled but no rungs are configured; using the fixed builder engine.[/yellow]")
+
     def confirm_shell(cmd):
         if yes or not cfg["safety"].get("require_shell_confirmation", True):
             return True
@@ -65,6 +85,8 @@ def run(task, project, config_path, yes, demo):
         project_dir=project,
         logger=console.print,
         confirm_shell=confirm_shell,
+        router=router,
+        rung_engines=rung_engines,
     )
     console.print(Panel.fit(f"[bold]Task:[/bold] {task}\n[bold]Project:[/bold] {project}", title="Relay"))
     try:
@@ -91,13 +113,17 @@ def _print_report(report):
     issues = v.get("issues") or ["none"]
     console.print(Panel.fit(f"Verification: {status}\nIssues: {issues}", title="Verifier"))
 
-    table = Table(title="Token usage by tier")
+    table = Table(title="Token usage by tier / model")
     table.add_column("Tier")
     table.add_column("Model")
+    table.add_column("Calls", justify="right")
     table.add_column("Input", justify="right")
     table.add_column("Output", justify="right")
-    for tier, stats in report["token_totals"].items():
-        table.add_row(tier, stats["model"], str(stats["input"]), str(stats["output"]))
+    for row in report.get("token_by_model") or [
+        {"tier": t, "model": s["model"], "calls": "-", "input": s["input"], "output": s["output"]}
+        for t, s in report["token_totals"].items()
+    ]:
+        table.add_row(row["tier"], row["model"], str(row["calls"]), str(row["input"]), str(row["output"]))
     console.print(table)
     console.print(f"[bold]Total tokens:[/bold] {report['grand_total_tokens']}")
 
