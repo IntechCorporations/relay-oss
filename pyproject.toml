@@ -1,0 +1,36 @@
+[project]
+name = "relay-oss"
+version = "0.1.0"
+description = "Relay: a free, local, multi-tier AI coding orchestrator. Routes tasks between a planning model, a cheap building model, and a verification model, and can drive your filesystem, shell, and (optionally) your desktop directly."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "click>=8.1",
+        "rich>=13.7",
+            "pyyaml>=6.0",
+                "requests>=2.31",
+                    "fastapi>=0.110",
+                        "uvicorn>=0.29",
+                        ]
+
+                        [project.optional-dependencies]
+                        anthropic = ["anthropic>=0.34"]
+                        openai = ["openai>=1.40"]
+                        desktop = ["pyautogui>=0.9.54", "keyboard>=0.13.5", "pillow>=10.0"]
+                        postgres = ["psycopg2-binary>=2.9"]
+                        dev = ["pytest>=8.0"]
+
+                        [project.scripts]
+                        relay = "relay.cli:main"
+
+                        [build-system]
+                        requires = ["setuptools>=68", "wheel"]
+                        build-backend = "setuptools.build_meta"
+
+                        [tool.setuptools]
+                        packages = ["relay", "relay.engines", "relay.connectors", "relay.web"]
+
+                        [tool.setuptools.package-data]
+                        "relay.web" = ["static/*.html"]
+                        
