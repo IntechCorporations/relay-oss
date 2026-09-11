@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Relay</title>
+<style>
+  :root {
+    --bg: #05050a;
+    --panel: #0e0e17;
+    --border: #1f2030;
+    --text: #e7e7ef;
+    --muted: #8b8b9e;
+    --accent: #7c8cff;
+    --good: #4ade80;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+  header .brand { font-weight: 700; font-size: 18px; letter-spacing: 0.02em; }
+  header .brand span { color: var(--accent); }
+  header nav { display: flex; gap: 22px; color: var(--muted); font-size: 14px; }
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 28px 20px 60px;
+  }
+  .subtitle { color: var(--muted); margin-top: -6px; margin-bottom: 28px; font-size: 14px; }
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card h2 { margin: 0 0 14px; font-size: 15px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  input[type=text], textarea {
+    width: 100%;
+    background: #08080f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  .row { display: flex; gap: 14px; margin-bottom: 14px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 200px; }
+  .controls { display: flex; align-items: center; gap: 14px; margin-top: 6px; }
+  button {
+    background: var(--accent);
+    color: #05050a;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .checkbox-row { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  #log {
+    background: #08080f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 13px;
+    height: 260px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+  }
+  #log .line { margin-bottom: 4px; }
+  #log .err { color: var(--bad); }
+  .status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .status-pill.pass { background: rgba(74,222,128,0.15); color: var(--good); }
+  .status-pill.fail { background: rgba(248,113,113,0.15); color: var(--bad); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 500; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Relay<span>.</span></div>
+  <nav><span>Dashboard</span><span>Config</span><span>History</span></nav>
+</header>
+<main>
+  <div class="subtitle">A free, local, multi-tier AI coding orchestrator. Runs on your machine.</div>
+
+  <div class="card">
+    <h2>New run</h2>
+    <div class="row">
+      <div>
+        <label for="task">Task</label>
+        <textarea id="task" placeholder="e.g. Add a dark mode toggle to the settings page"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label for="project">Project directory</label>
+        <input type="text" id="project" value="." />
+      </div>
+    </div>
+    <div class="controls">
+      <button id="runBtn">Run</button>
+      <label class="checkbox-row"><input type="checkbox" id="demo" checked /> Demo mode (no models required)</label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Live log</h2>
+    <div id="log"></div>
+  </div>
+
+  <div class="card hidden" id="resultCard">
+    <h2>Result</h2>
+    <p id="planSummary" style="color:var(--muted)"></p>
+    <p>Verification: <span id="verifyStatus" class="status-pill"></span></p>
+    <table>
+      <thead><tr><th>Tier</th><th>Model</th><th>Input tokens</th><th>Output tokens</th></tr></thead>
+      <tbody id="tokenTable"></tbody>
+    </table>
+    <p id="totalTokens" style="color:var(--muted); margin-top:10px;"></p>
+  </div>
+</main>
+
+<script>
+  const logEl = document.getElementById('log');
+  const runBtn = document.getElementById('runBtn');
+  const resultCard = document.getElementById('resultCard');
+
+  function appendLog(text, isErr) {
+    const div = document.createElement('div');
+    div.className = 'line' + (isErr ? ' err' : '');
+    div.textContent = text;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+  const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+  ws.onmessage = (evt) => {
+    const msg = JSON.parse(evt.data);
+    if (msg.type === 'start') {
+      appendLog(`Starting: ${msg.task}`);
+    } else if (msg.type === 'log') {
+      appendLog(msg.message);
+    } else if (msg.type === 'error') {
+      appendLog('Error: ' + msg.message, true);
+      runBtn.disabled = false;
+    } else if (msg.type === 'done') {
+      renderReport(msg.report);
+      runBtn.disabled = false;
+    }
+  };
+
+  function renderReport(report) {
+    resultCard.classList.remove('hidden');
+    document.getElementById('planSummary').textContent = report.plan.summary || '';
+    const v = report.verify_result || {};
+    const statusEl = document.getElementById('verifyStatus');
+    statusEl.textContent = v.passed ? 'PASSED' : 'FAILED';
+    statusEl.className = 'status-pill ' + (v.passed ? 'pass' : 'fail');
+
+    const body = document.getElementById('tokenTable');
+    body.innerHTML = '';
+    for (const [tier, stats] of Object.entries(report.token_totals || {})) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${tier}</td><td>${stats.model}</td><td>${stats.input}</td><td>${stats.output}</td>`;
+      body.appendChild(tr);
+    }
+    document.getElementById('totalTokens').textContent = `Total tokens: ${report.grand_total_tokens}`;
+  }
+
+  runBtn.addEventListener('click', async () => {
+    const task = document.getElementById('task').value.trim();
+    if (!task) return;
+    logEl.innerHTML = '';
+    resultCard.classList.add('hidden');
+    runBtn.disabled = true;
+    await fetch('/api/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task,
+        project: document.getElementById('project').value || '.',
+        demo: document.getElementById('demo').checked,
+      }),
+    });
+  });
+</script>
+</body>
+</html>
