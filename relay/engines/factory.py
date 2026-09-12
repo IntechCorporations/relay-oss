@@ -22,7 +22,8 @@ def build_engine(tier_cfg: dict) -> Engine:
         from .anthropic_engine import AnthropicEngine
 
         api_key = tier_cfg.get("api_key") or os.environ.get("ANTHROPIC_API_KEY")
-        return AnthropicEngine(model=tier_cfg["model"], api_key=api_key)
+        workspace_id = tier_cfg.get("workspace_id") or os.environ.get("ANTHROPIC_WORKSPACE_ID")
+        return AnthropicEngine(model=tier_cfg["model"], api_key=api_key, workspace_id=workspace_id)
 
     if provider == "openai":
         from .openai_engine import OpenAIEngine
@@ -76,6 +77,7 @@ def build_engine(tier_cfg: dict) -> Engine:
 # the OpenAI chat-completions protocol works with provider: openai_compatible.
 KNOWN_PLATFORMS = {
     "groq": {"label": "Groq", "base_url": "https://api.groq.com/openai/v1", "needs_key": True},
+    "xai": {"label": "xAI (Grok)", "base_url": "https://api.x.ai/v1", "needs_key": True},
     "together": {"label": "Together AI", "base_url": "https://api.together.xyz/v1", "needs_key": True},
     "fireworks": {"label": "Fireworks AI", "base_url": "https://api.fireworks.ai/inference/v1", "needs_key": True},
     "lmstudio": {"label": "LM Studio (local)", "base_url": "http://localhost:1234/v1", "needs_key": False},
