@@ -64,6 +64,7 @@ class ConnectionTest(BaseModel):
     model: str
     base_url: str | None = None
     api_key: str | None = None
+    workspace_id: str | None = None
     connection_id: str | None = None
 
 
@@ -178,6 +179,9 @@ async def api_test_connection(test: ConnectionTest):
     if test.base_url:
         tier_cfg["base_url"] = test.base_url
 
+    if test.workspace_id:
+        tier_cfg["workspace_id"] = test.workspace_id
+
     if test.api_key and not test.api_key.startswith("•"):
         # A real key was typed into the "add connection" form — use it directly.
         tier_cfg["api_key"] = test.api_key
@@ -189,6 +193,8 @@ async def api_test_connection(test: ConnectionTest):
         saved = next((c for c in cfg.get("connections", []) if c.get("id") == test.connection_id), None)
         if saved and saved.get("api_key"):
             tier_cfg["api_key"] = saved["api_key"]
+        if saved and saved.get("workspace_id"):
+            tier_cfg["workspace_id"] = saved["workspace_id"]
     try:
         engine = build_engine(tier_cfg)
         result = engine.complete(
