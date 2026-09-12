@@ -837,7 +837,7 @@
     btn.textContent = '…';
     const res = await fetch('/api/test-connection', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ provider: conn.provider, model: conn.model, base_url: conn.base_url, api_key: conn.api_key }),
+      body: JSON.stringify({ provider: conn.provider, model: conn.model, base_url: conn.base_url, api_key: conn.api_key, connection_id: conn.id }),
     });
     const data = await res.json();
     btn.textContent = data.ok ? '✓ OK' : '✗ Failed';
