@@ -64,6 +64,7 @@ class ConnectionTest(BaseModel):
     model: str
     base_url: str | None = None
     api_key: str | None = None
+    connection_id: str | None = None
 
 
 def _broadcast(message: str) -> None:
@@ -176,8 +177,18 @@ async def api_test_connection(test: ConnectionTest):
     tier_cfg = {"provider": test.provider, "model": test.model}
     if test.base_url:
         tier_cfg["base_url"] = test.base_url
+
     if test.api_key and not test.api_key.startswith("•"):
+        # A real key was typed into the "add connection" form — use it directly.
         tier_cfg["api_key"] = test.api_key
+    elif test.connection_id:
+        # Testing an already-saved connection: the browser only ever sees a
+        # redacted "••••1234" placeholder for api_key, so look the real key up
+        # server-side by id instead of trusting whatever the browser sent.
+        cfg = config_mod.load_config()
+        saved = next((c for c in cfg.get("connections", []) if c.get("id") == test.connection_id), None)
+        if saved and saved.get("api_key"):
+            tier_cfg["api_key"] = saved["api_key"]
     try:
         engine = build_engine(tier_cfg)
         result = engine.complete(
