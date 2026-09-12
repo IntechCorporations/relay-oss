@@ -384,6 +384,13 @@
           <input type="text" id="newLabel" placeholder="e.g. My local coder" />
         </div>
       </div>
+      <div class="row" id="newWorkspaceIdWrap" style="display:none;">
+        <div>
+          <label for="newWorkspaceId">Workspace ID (only if your key requires it)</label>
+          <input type="text" id="newWorkspaceId" placeholder="wrkspc_..." />
+          <div class="small-text" style="margin-top:4px;">Only needed if testing this key fails with "not scoped to a workspace" — find it at console.anthropic.com under Settings → Workspaces.</div>
+        </div>
+      </div>
       <div class="controls">
         <button id="addConnBtn">Add connection</button>
         <button class="secondary" id="testNewBtn">Test</button>
@@ -765,16 +772,19 @@
     const baseUrlWrap = document.getElementById('newBaseUrlWrap');
     const apiKeyWrap = document.getElementById('newApiKeyWrap');
     const baseUrlInput = document.getElementById('newBaseUrl');
+    const workspaceIdWrap = document.getElementById('newWorkspaceIdWrap');
     baseUrlWrap.classList.remove('hidden');
     apiKeyWrap.classList.add('hidden');
     baseUrlInput.value = '';
     baseUrlInput.placeholder = 'http://localhost:11434';
+    workspaceIdWrap.style.display = 'none';
 
     if (provider === 'ollama') {
       baseUrlInput.placeholder = 'http://localhost:11434';
     } else if (provider === 'anthropic' || provider === 'openai' || provider === 'gemini') {
       baseUrlWrap.classList.add('hidden');
       apiKeyWrap.classList.remove('hidden');
+      if (provider === 'anthropic') workspaceIdWrap.style.display = '';
     } else if (provider === 'openai_compatible') {
       apiKeyWrap.classList.remove('hidden');
       const presets = (liveConfig.known_platforms || {});
@@ -793,6 +803,7 @@
     const baseUrl = document.getElementById('newBaseUrl').value.trim();
     const apiKey = document.getElementById('newApiKey').value.trim();
     const label = document.getElementById('newLabel').value.trim();
+    const workspaceId = document.getElementById('newWorkspaceId').value.trim();
     if (!model) { alert('Enter a model name first.'); return null; }
     const conn = { id: newConnId(), provider, model, label };
     if (provider === 'openai_compatible') {
@@ -800,6 +811,7 @@
     }
     if (baseUrl) conn.base_url = baseUrl;
     if (apiKey) conn.api_key = apiKey;
+    if (provider === 'anthropic' && workspaceId) conn.workspace_id = workspaceId;
     return conn;
   }
 
@@ -811,7 +823,7 @@
     resultEl.className = 'test-result';
     const res = await fetch('/api/test-connection', {
       method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ provider: conn.provider, model: conn.model, base_url: conn.base_url, api_key: conn.api_key }),
+      body: JSON.stringify({ provider: conn.provider, model: conn.model, base_url: conn.base_url, api_key: conn.api_key, workspace_id: conn.workspace_id }),
     });
     const data = await res.json();
     if (data.ok) { resultEl.textContent = `✓ Connected (${data.model})`; resultEl.className = 'test-result ok'; }
